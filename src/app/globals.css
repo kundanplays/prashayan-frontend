@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2E5C55;
+  --color-primary-light: #3E7A70;
+  --color-primary-dark: #1F403B;
+  
+  --color-secondary: #F4F9F4;
+  --color-secondary-dark: #E1EBE1;
+
+  --color-tertiary: #D4AF37;
+  --color-tertiary-light: #E5C55E;
+  --color-tertiary-dark: #AA8C2C;
+
+  --font-sans: var(--font-outfit), sans-serif;
+  --font-serif: var(--font-playfair), serif;
+}
+
+:root {
+  --background: #F4F9F4;
+  --foreground: #2E5C55;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Keeping the same theme for now as per "Green/White/Gold" requirement, 
+       but could adjust for dark mode execution later if requested */
+    --background: #1a1a1a; 
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
