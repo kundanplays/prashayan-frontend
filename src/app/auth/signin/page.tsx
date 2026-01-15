@@ -21,8 +21,8 @@ export default function SignInPage() {
         try {
             const res = await auth.login(email, password);
             localStorage.setItem("token", res.data.access_token);
-            // Redirect to home or dashboard
-            router.push("/");
+            // Redirect to profile
+            router.push("/profile");
         } catch (err) {
             setError("Invalid credentials. Please try again.");
             console.error("Login failed", err);
@@ -77,6 +77,12 @@ export default function SignInPage() {
                             </div>
                         </div>
 
+                        <div className="flex justify-end">
+                            <Link href="/auth/forgot-password" className="text-sm text-tertiary hover:underline font-medium">
+                                Forgot Password?
+                            </Link>
+                        </div>
+
                         <button
                             type="submit"
                             className="w-full bg-primary text-secondary py-3.5 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors shadow-lg flex items-center justify-center gap-2 group"
@@ -94,6 +100,6 @@ export default function SignInPage() {
                     </div>
                 </motion.div>
             </div>
-        </main>
+        </main >
     );
 }

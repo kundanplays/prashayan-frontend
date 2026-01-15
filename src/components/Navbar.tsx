@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 
@@ -46,8 +46,7 @@ export function Navbar() {
             <div className="container mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="font-serif text-3xl font-bold text-primary tracking-wide">
-                    Prashayan
-                    <span className="text-tertiary">.</span>
+                    <img src="/logo.png" alt="Prashayan" className="h-16 md:h-20 w-auto object-contain" />
                 </Link>
 
                 {/* Desktop Nav */}
@@ -66,17 +65,20 @@ export function Navbar() {
 
                 {/* Icons */}
                 <div className="flex items-center space-x-6 text-primary">
+                    <Link href="/auth/signin" className="hover:text-tertiary transition-transform hover:scale-110">
+                        <User className="w-5 h-5" />
+                    </Link>
                     <button className="hover:text-tertiary transition-transform hover:scale-110">
                         <Search className="w-5 h-5" />
                     </button>
-                    <button className="relative hover:text-tertiary transition-transform hover:scale-110">
+                    <Link href="/cart" className="relative hover:text-tertiary transition-transform hover:scale-110">
                         <ShoppingBag className="w-5 h-5" />
                         {mounted && cartItems.length > 0 && (
                             <span className="absolute -top-1 -right-1 bg-tertiary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                                 {cartItems.length}
                             </span>
                         )}
-                    </button>
+                    </Link>
 
                     {/* Mobile Menu Button */}
                     <button
