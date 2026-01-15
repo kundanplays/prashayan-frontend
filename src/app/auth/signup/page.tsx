@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ArrowRight, Mail, Lock, User } from "lucide-react";
 
 import { auth } from "@/lib/api";
-import { auth } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {

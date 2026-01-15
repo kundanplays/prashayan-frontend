@@ -11,16 +11,17 @@ const api = axios.create({
 });
 
 export const auth = {
-    login: async (username, password) => {
+    login: async (username: string, password: string) => {
         const params = new URLSearchParams();
         params.append('username', username);
         params.append('password', password);
         return api.post("/auth/token", params);
     },
-    register: async (email, password) => {
+    register: async (email: string, password: string) => {
         return api.post("/auth/register", {
             email,
-            password_hash: password
+            password,
+            phone: "" // Optional but defined in backend
         });
     },
 };
