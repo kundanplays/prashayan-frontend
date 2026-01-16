@@ -1,6 +1,5 @@
 "use client";
 
-import { Navbar } from "@/components/Navbar";
 import { useCartStore } from "@/store/cart";
 import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -25,8 +24,6 @@ export default function CartPage() {
 
     return (
         <main className="min-h-screen bg-secondary">
-            <Navbar />
-
             <div className="container mx-auto px-6 pt-32 pb-20">
                 <h1 className="text-3xl font-serif font-bold text-primary mb-8">Your Cart</h1>
 

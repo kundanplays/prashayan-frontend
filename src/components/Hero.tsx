@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 export function Hero() {
     return (
-        <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-secondary">
+        <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-secondary pt-32 md:pt-36">
             {/* Background Gradient Blob */}
             <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-tertiary/10 to-transparent pointer-events-none" />
 

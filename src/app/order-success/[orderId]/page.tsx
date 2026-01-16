@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
 import { CheckCircle, Package, Truck, Home, ShoppingBag, MapPin, User, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -35,7 +34,6 @@ export default function OrderSuccessPage() {
     if (!orderData) {
         return (
             <main className="min-h-screen bg-secondary">
-                <Navbar />
                 <div className="container mx-auto px-6 pt-32 text-center">
                     <p className="text-primary/60">Loading order details...</p>
                 </div>
@@ -45,8 +43,6 @@ export default function OrderSuccessPage() {
 
     return (
         <main className="min-h-screen bg-secondary">
-            <Navbar />
-
             <div className="container mx-auto px-6 pt-32 pb-20 max-w-5xl">
                 {/* Header Success Message */}
                 <div className="text-center mb-16">

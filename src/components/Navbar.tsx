@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 
@@ -22,9 +22,31 @@ export function Navbar() {
     // Cart Store - Client side only to avoid hydration mismatch
     const cartItems = useCartStore((state) => state.items);
     const [mounted, setMounted] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
     useEffect(() => {
+        const checkAuth = () => {
+            const currentToken = localStorage.getItem("token");
+            console.log("Navbar - token check:", !!currentToken);
+            setToken(currentToken);
+        };
+
         setMounted(true);
+        checkAuth();
+
+        // Listen for storage changes
+        const handleStorageChange = () => {
+            console.log("Navbar - storage/auth change detected");
+            checkAuth();
+        };
+        window.addEventListener("storage", handleStorageChange);
+        // Also listen for custom login/logout events if we want immediate reactivity in same tab
+        window.addEventListener("auth-change", handleStorageChange);
+
+        return () => {
+            window.removeEventListener("storage", handleStorageChange);
+            window.removeEventListener("auth-change", handleStorageChange);
+        };
     }, []);
 
     useMotionValueEvent(scrollY, "change", (latest) => {
@@ -46,7 +68,7 @@ export function Navbar() {
             <div className="container mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="font-serif text-3xl font-bold text-primary tracking-wide">
-                    <img src="/logo.png" alt="Prashayan" className="h-16 md:h-20 w-auto object-contain" />
+                    <img src="/logo.png" alt="Prashayan" className="h-24 md:h-30 w-auto object-contain" />
                 </Link>
 
                 {/* Desktop Nav */}
@@ -65,9 +87,27 @@ export function Navbar() {
 
                 {/* Icons */}
                 <div className="flex items-center space-x-6 text-primary">
-                    <Link href="/auth/signin" className="hover:text-tertiary transition-transform hover:scale-110">
+                    <Link
+                        href={mounted && token ? "/profile" : "/auth/signin"}
+                        className="hover:text-tertiary transition-transform hover:scale-110"
+                    >
                         <User className="w-5 h-5" />
                     </Link>
+                    {mounted && token && (
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem("token");
+                                localStorage.clear(); // Clear all localStorage
+                                setToken(null);
+                                window.dispatchEvent(new Event("auth-change"));
+                                window.location.href = "/auth/signin";
+                            }}
+                            className="hover:text-red-500 transition-transform hover:scale-110"
+                            title="Sign Out"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    )}
                     <button className="hover:text-tertiary transition-transform hover:scale-110">
                         <Search className="w-5 h-5" />
                     </button>
@@ -107,6 +147,19 @@ export function Navbar() {
                             {link.name}
                         </Link>
                     ))}
+                    {mounted && token && (
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem("token");
+                                setToken(null);
+                                window.dispatchEvent(new Event("auth-change"));
+                                window.location.href = "/auth/signin";
+                            }}
+                            className="text-lg text-red-500 font-medium pt-4 border-t border-primary/10 w-full text-center"
+                        >
+                            Sign Out
+                        </button>
+                    )}
                 </motion.div>
             )}
         </motion.header>

@@ -1,66 +1,113 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { useCartStore } from "@/store/cart";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Reviews } from "@/components/Reviews";
+import { products as apiProducts, Product } from "@/lib/api";
 
-// Mock Data (matches listing)
-const products = [
-    {
-        id: "1",
-        name: "Pure Himalayan Shilajit",
-        slug: "shilajit-resin",
-        price: 1499,
-        image_url: "/images/shilajit.webp",
-        description: "Original, high-potency Shilajit resin sourced from the highest altitudes of the Himalayas. Boosts energy and vitality.",
-    },
-    {
-        id: "2",
-        name: "Shilajit Gold Plus",
-        slug: "shilajit-gold",
-        price: 2499,
-        image_url: "/images/shilajit-gold.webp",
-        description: "A premium blend of Shilajit and Swarna Bhasma (Gold Ash) for enhanced vigor, immunity, and anti-aging benefits.",
-    },
-    {
-        id: "3",
-        name: "Ashwagandha Vitality",
-        slug: "ashwagandha-vitality",
-        price: 899,
-        image_url: "/images/ashwagandha.webp",
-        description: "Organic Ashwagandha root extract to reduce stress, improve sleep, and increase muscle strength.",
-    },
-    {
-        id: "4",
-        name: "Triphala Pure Detox",
-        slug: "triphala-detox",
-        price: 499,
-        image_url: "/images/triphala.webp",
-        description: "A classic Ayurvedic herbal blend for digestive health, detoxification, and rejuvenation.",
-    },
-    {
-        id: "5",
-        name: "Kesar Radiance Elixir",
-        slug: "kesar-elixir",
-        price: 3999,
-        image_url: "/images/kesar.webp",
-        description: "Rare Kashmiri Saffron extract infused with essential oils for glowing skin and mental clarity.",
-    },
-];
+// Product cache to prevent reloading on navigation
+const productCache = new Map<string, { data: Product; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const getCachedProduct = (slug: string): Product | null => {
+    const cached = productCache.get(slug);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data;
+    }
+    return null;
+};
+
+const setCachedProduct = (slug: string, product: Product) => {
+    productCache.set(slug, { data: product, timestamp: Date.now() });
+
+    // Preload images to browser cache (only on client side)
+    if (typeof window !== 'undefined') {
+        if (product.image_url) {
+            const img = new window.Image();
+            img.src = product.image_url;
+        }
+        if (product.thumbnail_url) {
+            const img = new window.Image();
+            img.src = product.thumbnail_url;
+        }
+        if (product.image_urls) {
+            product.image_urls.forEach(url => {
+                const img = new window.Image();
+                img.src = url;
+            });
+        }
+        if (product.full_image_urls) {
+            product.full_image_urls.forEach(url => {
+                const img = new window.Image();
+                img.src = url;
+            });
+        }
+    }
+};
+
+// Clear cache function (can be called when products are updated)
+const clearProductCache = (slug?: string) => {
+    if (slug) {
+        productCache.delete(slug);
+    } else {
+        productCache.clear();
+    }
+};
+
+// Export for external use (only on client side)
+if (typeof window !== 'undefined') {
+    (window as any).clearProductCache = clearProductCache;
+}
 
 export default function ProductDetailPage() {
     const params = useParams();
     const slug = params.slug as string;
-    const product = products.find((p) => p.slug === slug);
+    const [product, setProduct] = useState<Product | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isFromCache, setIsFromCache] = useState(false);
     const addItem = useCartStore((state) => state.addItem);
     const [added, setAdded] = useState(false);
     const [activeTab, setActiveTab] = useState('Benefits');
+
+    useEffect(() => {
+        const fetchProduct = async () => {
+            // Check cache first
+            const cachedProduct = getCachedProduct(slug);
+            if (cachedProduct) {
+                setProduct(cachedProduct);
+                setIsFromCache(true);
+                setLoading(false);
+                return;
+            }
+
+            // Fetch from API if not cached or cache expired
+            try {
+                const response = await apiProducts.get(slug);
+                setProduct(response.data);
+                setIsFromCache(false); // Fresh data from API
+                setCachedProduct(slug, response.data);
+            } catch (error) {
+                console.error("Failed to fetch product:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-secondary">
+                <div className="animate-pulse text-primary text-xl font-serif">Loading product details...</div>
+            </div>
+        );
+    }
 
     if (!product) {
         return (
@@ -71,15 +118,18 @@ export default function ProductDetailPage() {
     }
 
     const handleAddToCart = () => {
-        addItem(product);
+        addItem({
+            id: String(product.id),
+            name: product.name,
+            price: product.selling_price,
+            image: product.image_url
+        });
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
     };
 
     return (
         <main className="min-h-screen bg-secondary">
-            <Navbar />
-
             <div className="container mx-auto px-6 pt-32 pb-20">
                 <Link href="/products" className="inline-flex items-center text-primary/60 hover:text-primary mb-8 transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back to Shop
@@ -89,9 +139,9 @@ export default function ProductDetailPage() {
 
                     {/* Image Side - Animated */}
                     <motion.div
-                        initial={{ opacity: 0, x: -50 }}
+                        initial={isFromCache ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6 }}
+                        transition={isFromCache ? { duration: 0 } : { duration: 0.6 }}
                         className="relative"
                     >
                         <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl bg-white border border-primary/5 relative z-10">
@@ -108,9 +158,9 @@ export default function ProductDetailPage() {
 
                     {/* Details Side - Animated */}
                     <motion.div
-                        initial={{ opacity: 0, x: 50 }}
+                        initial={isFromCache ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
+                        transition={isFromCache ? { duration: 0 } : { duration: 0.6, delay: 0.2 }}
                         className="flex flex-col justify-center h-full"
                     >
                         <div className="inline-block px-4 py-1.5 rounded-full bg-tertiary/10 text-tertiary-dark font-semibold text-sm w-fit mb-4">
@@ -118,8 +168,8 @@ export default function ProductDetailPage() {
                         </div>
                         <h1 className="text-4xl md:text-6xl font-serif font-bold text-primary mb-6 leading-tight">{product.name}</h1>
                         <p className="text-3xl font-bold text-primary mb-8 flex items-center gap-3">
-                            ₹{product.price}
-                            <span className="text-lg font-normal text-primary/50 line-through">₹{product.price + 500}</span>
+                            ₹{product.selling_price}
+                            <span className="text-lg font-normal text-primary/50 line-through">₹{product.mrp}</span>
                         </p>
 
                         <p className="text-primary/70 mb-10 leading-relaxed text-lg border-l-4 border-tertiary pl-6">
@@ -159,35 +209,59 @@ export default function ProductDetailPage() {
                 {/* Expanded Info Tabs */}
                 <div className="max-w-4xl mx-auto mb-24">
                     <div className="flex flex-wrap gap-8 border-b border-primary/10 pb-4 mb-10">
-                        <h3 className="text-xl font-serif font-semibold text-primary cursor-pointer border-b-2 border-tertiary pb-4 -mb-[17px]">Benefits</h3>
-                        <h3 className="text-xl font-serif font-semibold text-primary/40 cursor-pointer pb-4">Ingredients</h3>
-                        <h3 className="text-xl font-serif font-semibold text-primary/40 cursor-pointer pb-4">How to Use</h3>
+                        <h3
+                            className={`text-xl font-serif font-semibold cursor-pointer pb-4 -mb-[17px] transition-all ${activeTab === 'Benefits' ? 'text-primary border-b-2 border-tertiary' : 'text-primary/40'}`}
+                            onClick={() => setActiveTab('Benefits')}
+                        >
+                            Benefits
+                        </h3>
+                        <h3
+                            className={`text-xl font-serif font-semibold cursor-pointer pb-4 -mb-[17px] transition-all ${activeTab === 'Ingredients' ? 'text-primary border-b-2 border-tertiary' : 'text-primary/40'}`}
+                            onClick={() => setActiveTab('Ingredients')}
+                        >
+                            Ingredients
+                        </h3>
+                        <h3
+                            className={`text-xl font-serif font-semibold cursor-pointer pb-4 -mb-[17px] transition-all ${activeTab === 'How to Use' ? 'text-primary border-b-2 border-tertiary' : 'text-primary/40'}`}
+                            onClick={() => setActiveTab('How to Use')}
+                        >
+                            How to Use
+                        </h3>
                     </div>
 
-                    <div className="prose prose-lg text-primary/80">
-                        <p className="leading-relaxed">
-                            Experience the holistic power of Ayurveda. This formulation is designed to restore balance to your Doshas.
-                            Regular usage supports physical vitality, mental clarity, and emotional well-being.
-                            Derived from the purest sources in the Himalayas, ensuring you get the most potent bio-active compounds.
-                        </p>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                            <li className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                                <span>Boosts Immunity naturally</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                                <span>Improves Stamina and Energy</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                                <span>Reduces Stress and Anxiety</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                                <span>Supports deep, restorative sleep</span>
-                            </li>
-                        </ul>
+                    <div className="prose prose-lg text-primary/80 min-h-[200px]">
+                        {activeTab === 'Benefits' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <p className="leading-relaxed border-l-4 border-tertiary pl-6 italic mb-8">
+                                    Experience the holistic power of Ayurveda. Regular usage supports physical vitality, mental clarity, and emotional well-being.
+                                </p>
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                    {product.benefits.split(',').map((benefit, idx) => (
+                                        <li key={idx} className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-tertiary shrink-0"></div>
+                                            <span>{benefit.trim()}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {activeTab === 'Ingredients' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <p className="leading-relaxed">{product.ingredients}</p>
+                                <p className="mt-4 text-sm text-primary/60">Derived from the purest sources, ensuring you get the most potent bio-active compounds.</p>
+                            </div>
+                        )}
+
+                        {activeTab === 'How to Use' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <p className="leading-relaxed">{product.how_to_use}</p>
+                                <div className="mt-8 p-6 bg-primary/5 rounded-2xl border border-primary/10">
+                                    <p className="text-sm font-medium text-primary uppercase tracking-widest mb-2">Pro Tip</p>
+                                    <p className="text-primary/70">Consistency is key in Ayurveda. For best results, follow the recommended dosage daily.</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

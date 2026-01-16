@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Mail, Lock } from "lucide-react";
@@ -21,18 +20,20 @@ export default function SignInPage() {
         try {
             const res = await auth.login(email, password);
             localStorage.setItem("token", res.data.access_token);
+            // Dispatch auth change event to update Navbar state
+            window.dispatchEvent(new Event("auth-change"));
             // Redirect to profile
             router.push("/profile");
-        } catch (err) {
-            setError("Invalid credentials. Please try again.");
+        } catch (err: any) {
+            // Extract the specific error message from backend response
+            const errorMessage = err.response?.data?.detail || "Login failed. Please try again.";
+            setError(errorMessage);
             console.error("Login failed", err);
         }
     };
 
     return (
         <main className="min-h-screen bg-secondary">
-            <Navbar />
-
             <div className="container mx-auto px-6 pt-32 pb-20 flex items-center justify-center min-h-[80vh]">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -45,6 +46,12 @@ export default function SignInPage() {
 
                     <h1 className="text-3xl font-serif font-bold text-primary mb-2 text-center">Welcome Back</h1>
                     <p className="text-primary/60 text-center mb-8">Sign in to your Prashayan account</p>
+
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm text-center">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">

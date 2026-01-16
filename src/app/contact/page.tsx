@@ -1,14 +1,11 @@
 "use client";
 
-import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin } from "lucide-react";
 
 export default function ContactPage() {
     return (
         <main className="min-h-screen bg-secondary">
-            <Navbar />
-
             <div className="container mx-auto px-6 pt-32 pb-20">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
 
 // Mock Blog Data
 const blogPosts = [
@@ -92,8 +91,7 @@ const blogPosts = [
 export default function AyurvedaPage() {
     return (
         <>
-            <Navbar />
-            <main className="pt-24 min-h-screen bg-secondary">
+            <main className="pt-32 min-h-screen bg-secondary">
                 {/* Header */}
                 <section className="container mx-auto px-6 mb-16 text-center">
                     <motion.h1

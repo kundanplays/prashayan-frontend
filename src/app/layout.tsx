@@ -22,13 +22,21 @@ export const metadata: Metadata = {
   description: "Pure, high-purity herbal products for a healthier life.",
 };
 
+// Razorpay script
+const RazorpayScript = () => (
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+);
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      </head>
       <body
         className={cn(
           "min-h-screen font-sans antialiased bg-secondary text-primary",
