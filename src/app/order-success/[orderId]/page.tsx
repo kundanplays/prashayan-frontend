@@ -19,12 +19,43 @@ export default function OrderSuccessPage() {
     const [orderData, setOrderData] = useState<any>(null);
 
     useEffect(() => {
-        const savedOrder = localStorage.getItem("lastOrder");
-        if (savedOrder) {
-            const parsed = JSON.parse(savedOrder);
-            if (parsed.orderId === orderId) {
-                setOrderData(parsed);
+        const fetchOrder = async () => {
+            try {
+                // Try fetching from API first (most reliable for payment updates)
+                const token = localStorage.getItem("token");
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`http://127.0.0.1:8000/api/v1/orders/${orderId}`, {
+                    headers
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setOrderData(data);
+                    return;
+                }
+            } catch (error) {
+                console.error("Failed to fetch order from API", error);
             }
+
+            // Fallback to local storage
+            const savedOrder = localStorage.getItem("lastOrder");
+            if (savedOrder) {
+                const parsed = JSON.parse(savedOrder);
+                // Handle both string and number comparison
+                if (String(parsed.orderId) === String(orderId)) {
+                    setOrderData(parsed);
+                }
+            }
+        };
+
+        if (orderId) {
+            fetchOrder();
         }
     }, [orderId]);
 

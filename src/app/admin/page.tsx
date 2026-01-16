@@ -3,6 +3,24 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import { auth, admin } from "@/lib/api";
+
+interface AdminUser {
+    id: number;
+    email: string;
+    name: string;
+    role: 'admin' | 'super_admin';
+    permissions: string[];
+    metadata: {
+        access_level: number;
+        can_manage_users: boolean;
+        can_manage_settings: boolean;
+        can_view_analytics: boolean;
+        created_by?: string;
+    };
+    created_at: string;
+    last_login?: string;
+}
 
 export default function AdminEntry() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -22,10 +40,11 @@ export default function AdminEntry() {
     }, []);
 
     const checkAuthentication = () => {
-        const adminToken = localStorage.getItem('admin_token');
+        // Check for both token and admin_user structure
+        const token = localStorage.getItem('token');
         const adminUser = localStorage.getItem('admin_user');
 
-        if (adminToken && adminUser) {
+        if (token && adminUser) {
             try {
                 const user = JSON.parse(adminUser);
                 if (user.role && ['admin', 'super_admin'].includes(user.role)) {
@@ -38,6 +57,7 @@ export default function AdminEntry() {
                 }
             } catch (error) {
                 // Invalid data - clear it
+                localStorage.removeItem('token');
                 localStorage.removeItem('admin_token');
                 localStorage.removeItem('admin_user');
                 localStorage.removeItem('admin_logged_in');
@@ -54,153 +74,72 @@ export default function AdminEntry() {
         setSuccess(false);
 
         try {
-            // Check if admin user exists in localStorage (from setup)
-            let storedAdmin = localStorage.getItem('dev_admin_user');
+            // 1. Authenticate with backend
+            const response = await auth.login(credentials.email, credentials.password);
+            const { access_token } = response.data;
 
-            // If no admin user exists, create one automatically for development
-            if (!storedAdmin && process.env.NODE_ENV === 'development') {
-                console.log('No admin user found, creating development admin user...');
-                const mockAdminUser = {
-                    id: Date.now(),
-                    email: "bhawna@Prashayan.com",
-                    name: "Bhawna Admin",
-                    password: "Hellohello@0",
-                    role: "super_admin" as const,
-                    permissions: [
-                        'dashboard:*',
-                        'users:*',
-                        'products:*',
-                        'orders:*',
-                        'reviews:*',
-                        'blogs:*',
-                        'payments:*',
-                        'analytics:*',
-                        'settings:*'
-                    ],
-                    metadata: {
-                        access_level: 100,
-                        can_manage_users: true,
-                        can_manage_settings: true,
-                        can_view_analytics: true,
-                        created_by: 'development'
-                    },
-                    created_at: new Date().toISOString(),
-                    last_login: new Date().toISOString()
-                };
-
-                // Store the admin user
-                localStorage.setItem('dev_admin_user', JSON.stringify(mockAdminUser));
-                storedAdmin = JSON.stringify(mockAdminUser);
+            if (!access_token) {
+                throw new Error("No access token received");
             }
 
-            if (!storedAdmin) {
-                setError("No admin user configured. Please set up admin user first.");
+            // Store token for subsequent requests
+            localStorage.setItem("token", access_token);
+            // Also store as admin_token for compatibility with existing AdminLayout
+            localStorage.setItem("admin_token", access_token);
+
+            // 2. Fetch admin user details
+            const userResponse = await admin.me();
+            const user = userResponse.data;
+
+            if (!user.role || !['admin', 'super_admin'].includes(user.role)) {
+                setError("Access denied. You do not have admin permissions.");
+                localStorage.removeItem("token");
+                localStorage.removeItem("admin_token");
                 return;
             }
 
-            const adminUser = JSON.parse(storedAdmin);
-
-            // Verify credentials
-            if (adminUser.email !== credentials.email || adminUser.password !== credentials.password) {
-                setError("Invalid email or password");
-                return;
-            }
-
-            // Validate admin user structure and role
-            if (!adminUser.role || !['admin', 'super_admin'].includes(adminUser.role)) {
-                setError("Invalid admin user configuration. Please recreate admin user.");
-                return;
-            }
-
-            if (!adminUser.metadata || typeof adminUser.metadata.access_level !== 'number') {
-                setError("Invalid admin metadata. Please recreate admin user.");
-                return;
-            }
-
-            // Create admin session with metadata validation
-            const adminToken = btoa(`${adminUser.email}:${Date.now()}:${adminUser.role}`);
-            const sessionUser = {
-                ...adminUser,
+            // 3. Construct AdminUser object for local storage (matching AdminLayout expectations)
+            const adminUser: AdminUser = {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role as 'admin' | 'super_admin',
+                permissions: user.permissions || [],
+                metadata: {
+                    access_level: user.role === 'super_admin' ? 100 : 50,
+                    can_manage_users: user.role === 'super_admin' || (user.permissions && user.permissions.includes('users:*')) || false,
+                    can_manage_settings: user.role === 'super_admin' || (user.permissions && user.permissions.includes('settings:*')) || false,
+                    can_view_analytics: true,
+                    created_by: 'system'
+                },
+                created_at: user.created_at || new Date().toISOString(),
                 last_login: new Date().toISOString()
             };
 
-            localStorage.setItem('admin_token', adminToken);
-            localStorage.setItem('admin_user', JSON.stringify(sessionUser));
+            localStorage.setItem('admin_user', JSON.stringify(adminUser));
             localStorage.setItem('admin_logged_in', 'true');
             localStorage.setItem('admin_role', adminUser.role);
             localStorage.setItem('admin_access_level', adminUser.metadata.access_level.toString());
 
             setSuccess(true);
 
-            // Log admin login details for verification
-            console.log('Admin Login Successful:', {
-                email: adminUser.email,
-                role: adminUser.role,
-                access_level: adminUser.metadata.access_level,
-                permissions: adminUser.permissions,
-                can_manage_users: adminUser.metadata.can_manage_users,
-                can_manage_settings: adminUser.metadata.can_manage_settings
-            });
-
             // Redirect to admin dashboard after success message
             setTimeout(() => {
                 router.replace('/admin/dashboard');
             }, 1500);
 
-        } catch (err) {
-            setError("Login failed. Please try again.");
+        } catch (err: any) {
+            console.error("Login error:", err);
+            if (err.response?.status === 401) {
+                setError("Invalid email or password");
+            } else if (err.response?.data?.detail) {
+                setError(err.response.data.detail);
+            } else {
+                setError("Login failed. Please check your connection and try again.");
+            }
         } finally {
             setIsLoggingIn(false);
         }
-    };
-
-    const enableDevelopmentAdmin = () => {
-        // Create a mock admin user directly
-        const mockAdminUser = {
-            id: Date.now(),
-            email: "bhawna@Prashayan.com",
-            name: "Bhawna Admin",
-            password: "Hellohello@0",
-            role: "super_admin" as const,
-            permissions: [
-                'dashboard:*',
-                'users:*',
-                'products:*',
-                'orders:*',
-                'reviews:*',
-                'blogs:*',
-                'payments:*',
-                'analytics:*',
-                'settings:*'
-            ],
-            metadata: {
-                access_level: 100,
-                can_manage_users: true,
-                can_manage_settings: true,
-                can_view_analytics: true,
-                created_by: 'development'
-            },
-            created_at: new Date().toISOString(),
-            last_login: new Date().toISOString()
-        };
-
-        // Store in localStorage
-        localStorage.setItem('dev_admin_user', JSON.stringify(mockAdminUser));
-
-        // Create admin session
-        const adminToken = btoa(`${mockAdminUser.email}:${Date.now()}:${mockAdminUser.role}`);
-        localStorage.setItem('admin_token', adminToken);
-        localStorage.setItem('admin_user', JSON.stringify(mockAdminUser));
-        localStorage.setItem('admin_logged_in', 'true');
-        localStorage.setItem('admin_role', mockAdminUser.role);
-        localStorage.setItem('admin_access_level', mockAdminUser.metadata.access_level.toString());
-
-        setSuccess(true);
-
-        // Redirect to dashboard
-        setTimeout(() => {
-            router.replace('/admin/dashboard');
-        }, 1000);
     };
 
     const fillCredentials = () => {
@@ -362,16 +301,6 @@ export default function AdminEntry() {
 
                     <div className="grid grid-cols-1 gap-3">
                         <button
-                            onClick={enableDevelopmentAdmin}
-                            className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary-dark transition-colors font-medium flex items-center justify-center gap-2"
-                        >
-                            <Shield className="w-4 h-4" />
-                            Enable Development Admin Access
-                        </button>
-
-                        <div className="text-center text-sm text-gray-500">or</div>
-
-                        <button
                             onClick={fillCredentials}
                             className="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                         >
@@ -381,16 +310,6 @@ export default function AdminEntry() {
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
-                    <div className="text-center">
-                        <p className="text-sm text-gray-600">Need to set up admin user?</p>
-                        <a
-                            href="/admin/setup"
-                            className="text-primary hover:underline text-sm font-medium"
-                        >
-                            Create Admin Account →
-                        </a>
-                    </div>
-
                     <div className="text-center">
                         <p className="text-sm text-gray-600">Regular user login?</p>
                         <a

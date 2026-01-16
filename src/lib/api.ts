@@ -543,6 +543,11 @@ export const admin = {
             return api.post("/admin/settings/reset", {}, { headers: getAuthHeaders() });
         },
     },
+
+    // Admin profile
+    me: async () => {
+        return api.get<User & { role: 'admin' | 'super_admin', permissions: string[] }>("/admin/me", { headers: getAuthHeaders() });
+    }
 };
 
 export default api;

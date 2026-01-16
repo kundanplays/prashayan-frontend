@@ -160,6 +160,7 @@ export default function CheckoutPage() {
 
             // Step 2: Get Razorpay order details from backend
             const paymentResponse = await fetch(`http://127.0.0.1:8000/api/v1/payment/create-order?amount=${order.final_amount}`, {
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
                 }
@@ -238,26 +239,65 @@ export default function CheckoutPage() {
 
 
     const placeOrder = async () => {
-        const orderId = "PR" + Math.floor(Math.random() * 1000000);
+        setIsProcessing(true);
+        setPaymentError('');
 
-                // Store order data in session/local storage for the success page demo
-                const orderData = {
-                    orderId,
-                    items,
-                    total: total(),
-                    subtotal: subtotal(),
-                    discount,
-                    customer: formData,
-                    paymentMethod,
-                    shippingAddress: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
-                    status: "order placed",
-                    date: new Date().toLocaleDateString()
-                };
-        localStorage.setItem("lastOrder", JSON.stringify(orderData));
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/v1/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                },
+                body: JSON.stringify({
+                    items: items.map(item => ({
+                        product_id: item.id,
+                        quantity: item.quantity
+                    })),
+                    shipping_address: {
+                        full_name: formData.fullName,
+                        email: formData.email,
+                        phone: formData.phone,
+                        address: formData.address,
+                        city: formData.city,
+                        state: formData.state,
+                        pincode: formData.pincode
+                    },
+                    payment_method: 'cod'
+                })
+            });
 
-        setIsProcessing(false);
-        clearCart();
-        router.push(`/order-success/${orderId}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to place order');
+            }
+
+            const order = await response.json();
+            const orderId = order.order_number || `PR${order.id}`;
+
+            // Store order data in session/local storage for the success page demo
+            const orderData = {
+                orderId,
+                items,
+                total: order.final_amount,
+                subtotal: subtotal(),
+                discount,
+                customer: formData,
+                paymentMethod,
+                shippingAddress: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+                status: "order placed",
+                date: new Date().toLocaleDateString()
+            };
+            localStorage.setItem("lastOrder", JSON.stringify(orderData));
+
+            setIsProcessing(false);
+            clearCart();
+            router.push(`/order-success/${orderId}`);
+        } catch (error) {
+            console.error("Order error:", error);
+            setPaymentError(error instanceof Error ? error.message : "Failed to place order");
+            setIsProcessing(false);
+        }
     };
 
     if (items.length === 0) {

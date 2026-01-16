@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { ShoppingBag, Search, Menu, X, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ const navLinks = [
 ];
 
 export function Navbar() {
+    const pathname = usePathname();
     const { scrollY } = useScroll();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +25,11 @@ export function Navbar() {
     const cartItems = useCartStore((state) => state.items);
     const [mounted, setMounted] = useState(false);
     const [token, setToken] = useState<string | null>(null);
+
+    // Don't render navbar on admin pages
+    if (pathname?.startsWith('/admin')) {
+        return null;
+    }
 
     useEffect(() => {
         const checkAuth = () => {
