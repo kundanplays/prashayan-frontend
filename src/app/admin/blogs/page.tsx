@@ -60,9 +60,9 @@ export default function BlogsManagement() {
     };
 
     const filteredBlogs = blogs.filter(blog =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.author.toLowerCase().includes(searchTerm.toLowerCase())
+        (blog.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (blog.content || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (blog.author || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

@@ -54,6 +54,7 @@ export default function OrdersManagement() {
     };
 
     const getStatusColor = (status: string) => {
+        if (!status) return "bg-gray-100 text-gray-800";
         switch (status.toLowerCase()) {
             case "pending":
                 return "bg-yellow-100 text-yellow-800";
@@ -71,6 +72,7 @@ export default function OrdersManagement() {
     };
 
     const getPaymentStatusColor = (status: string) => {
+        if (!status) return "bg-gray-100 text-gray-800";
         switch (status.toLowerCase()) {
             case "paid":
                 return "bg-green-100 text-green-800";
@@ -85,8 +87,8 @@ export default function OrdersManagement() {
 
     const filteredOrders = orders.filter(order =>
         order.id.toString().includes(searchTerm) ||
-        order.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user?.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (order.user?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -305,6 +307,7 @@ function ViewOrderModal({
     onPaymentVerify: (orderId: string, razorpayPaymentId: string) => void;
 }) {
     const getStatusIcon = (status: string) => {
+        if (!status) return <Package className="w-5 h-5 text-gray-500" />;
         switch (status.toLowerCase()) {
             case "pending":
                 return <Package className="w-5 h-5 text-yellow-500" />;

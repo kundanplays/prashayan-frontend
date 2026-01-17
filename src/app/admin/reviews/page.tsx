@@ -65,9 +65,9 @@ export default function ReviewsManagement() {
     };
 
     const filteredReviews = reviews.filter(review =>
-        review.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        review.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        review.product?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        (review.comment || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (review.user?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (review.product?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

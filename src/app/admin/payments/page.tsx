@@ -43,6 +43,7 @@ export default function PaymentsManagement() {
     };
 
     const getStatusColor = (status: string) => {
+        if (!status) return "bg-gray-100 text-gray-800";
         switch (status.toLowerCase()) {
             case "paid":
                 return "bg-green-100 text-green-800";
@@ -58,6 +59,7 @@ export default function PaymentsManagement() {
     };
 
     const getStatusIcon = (status: string) => {
+        if (!status) return <CreditCard className="w-4 h-4 text-gray-500" />;
         switch (status.toLowerCase()) {
             case "paid":
                 return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -266,6 +268,7 @@ function ViewPaymentModal({
     onVerify: () => void;
 }) {
     const getStatusColor = (status: string) => {
+        if (!status) return "text-gray-600 bg-gray-50";
         switch (status.toLowerCase()) {
             case "paid":
                 return "text-green-600 bg-green-50";

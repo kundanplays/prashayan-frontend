@@ -128,12 +128,19 @@ export default function CheckoutPage() {
     const initiateRazorpayPayment = async () => {
         try {
             // Step 1: Create order through backend
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json'
+            };
+
+            // Only add Authorization header if token exists (for logged-in users)
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const orderResponse = await fetch('http://127.0.0.1:8000/api/v1/orders/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                },
+                headers,
                 body: JSON.stringify({
                     items: items.map(item => ({
                         product_id: item.id,
@@ -159,11 +166,17 @@ export default function CheckoutPage() {
             const order = await orderResponse.json();
 
             // Step 2: Get Razorpay order details from backend
+            const paymentHeaders: Record<string, string> = {};
+
+            // Only add Authorization header if token exists (for logged-in users)
+            const token = localStorage.getItem('token');
+            if (token) {
+                paymentHeaders['Authorization'] = `Bearer ${token}`;
+            }
+
             const paymentResponse = await fetch(`http://127.0.0.1:8000/api/v1/payment/create-order?amount=${order.final_amount}`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                }
+                headers: paymentHeaders
             });
 
             if (!paymentResponse.ok) {
