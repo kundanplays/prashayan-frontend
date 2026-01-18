@@ -14,6 +14,7 @@ export interface Product {
     name: string;
     slug: string;
     description: string;
+    introductory_description?: string;
     how_to_use: string;
     ingredients: string;
     benefits: string;
@@ -31,6 +32,14 @@ export interface User {
     email: string;
     name: string;
     phone: string;
+    address?: {
+        address?: string;
+        city?: string;
+        state?: string;
+        pincode?: string;
+    } | null;
+    image_url?: string;
+    full_image_url?: string;
     is_active: boolean;
     role: string;
     permissions: string[];
@@ -155,6 +164,17 @@ export const orders = {
                 Authorization: `Bearer ${token}`
             }
         });
+    },
+    track: async (orderNumber: string, email?: string) => {
+        const token = localStorage.getItem("token");
+        const headers: any = {};
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+        if (email) {
+            headers['X-User-Email'] = email;
+        }
+        return api.get(`/orders/track/${orderNumber}`, { headers });
     }
 }
 
@@ -487,8 +507,21 @@ export const admin = {
                 pendingPayments: number;
                 monthlyRevenue: number;
                 monthlyGrowth: number;
-                recentOrders: Order[];
-                recentReviews: Review[];
+                recentOrders: Array<{
+                    id: number;
+                    user_name: string;
+                    total_amount: number;
+                    status: string;
+                    created_at: string;
+                }>;
+                recentReviews: Array<{
+                    id: number;
+                    user_name: string;
+                    product_name: string;
+                    rating: number;
+                    comment: string;
+                    created_at: string;
+                }>;
                 topProducts: Array<{ name: string; sales: number; revenue: number }>;
             }>("/admin/dashboard/stats", { headers: getAuthHeaders() });
         },

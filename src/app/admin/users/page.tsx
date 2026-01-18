@@ -40,7 +40,7 @@ export default function UsersManagement() {
             fetchUsers();
         } catch (error) {
             console.error("Error deleting user:", error);
-            alert(error.message || "Failed to delete user. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to delete user. Check your permissions.");
         }
     };
 
@@ -50,7 +50,7 @@ export default function UsersManagement() {
             fetchUsers();
         } catch (error) {
             console.error("Error updating user status:", error);
-            alert(error.message || "Failed to update user status. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to update user status. Check your permissions.");
         }
     };
 

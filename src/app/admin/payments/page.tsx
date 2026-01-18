@@ -25,7 +25,7 @@ export default function PaymentsManagement() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error("Error fetching payments:", error);
-            alert(error.message || "Failed to load payments. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load payments. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -38,7 +38,7 @@ export default function PaymentsManagement() {
             alert("Payment verified successfully!");
         } catch (error) {
             console.error("Error verifying payment:", error);
-            alert(error.message || "Failed to verify payment. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to verify payment. Check your permissions.");
         }
     };
 

@@ -289,23 +289,23 @@ export default function AdminLayout({
                         <div className="flex items-center space-x-3 mb-3">
                             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                                 <span className="text-white text-sm font-medium">
-                                    {user.name.charAt(0).toUpperCase()}
+                                    {user?.name?.charAt(0).toUpperCase() || 'U'}
                                 </span>
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">
-                                    {user.name}
+                                    {user?.name || 'User'}
                                 </p>
                                 <div className="flex items-center space-x-2">
                                     <p className="text-xs text-gray-500 capitalize">
-                                        {user.role.replace('_', ' ')}
+                                        {user?.role?.replace('_', ' ') || 'User'}
                                     </p>
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        user.role === 'super_admin'
+                                        user?.role === 'super_admin'
                                             ? 'bg-purple-100 text-purple-800'
                                             : 'bg-blue-100 text-blue-800'
                                     }`}>
-                                        {user.metadata.access_level}
+                                        {user?.metadata?.access_level || 'Standard'}
                                     </span>
                                 </div>
                             </div>
@@ -351,9 +351,9 @@ export default function AdminLayout({
 
                         <div className="flex items-center space-x-4">
                             <div className="hidden md:block text-right">
-                                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                                <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
                                 <p className="text-xs text-gray-500 capitalize">
-                                    {user.role.replace('_', ' ')} (Level {user.metadata.access_level})
+                                    {user?.role?.replace('_', ' ') || 'User'} (Level {user?.metadata?.access_level || '1'})
                                 </p>
                             </div>
                         </div>

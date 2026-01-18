@@ -27,7 +27,7 @@ export default function BlogsManagement() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error("Error fetching blogs:", error);
-            alert(error.message || "Failed to load blogs. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load blogs. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -41,7 +41,7 @@ export default function BlogsManagement() {
             fetchBlogs();
         } catch (error) {
             console.error("Error deleting blog:", error);
-            alert(error.message || "Failed to delete blog post. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to delete blog post. Check your permissions.");
         }
     };
 
@@ -55,7 +55,7 @@ export default function BlogsManagement() {
             fetchBlogs();
         } catch (error) {
             console.error("Error toggling blog publish status:", error);
-            alert(error.message || "Failed to update blog status. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to update blog status. Check your permissions.");
         }
     };
 
@@ -309,7 +309,7 @@ function BlogModal({ blog, onClose, onSave }: { blog?: Blog | null; onClose: () 
         try {
             const submitData = new FormData();
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === "tags") {
+                if (key === "tags" && typeof value === "string") {
                     submitData.append(key, value.split(",").map(tag => tag.trim()).join(","));
                 } else {
                     submitData.append(key, value.toString());

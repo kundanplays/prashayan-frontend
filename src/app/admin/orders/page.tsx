@@ -26,7 +26,7 @@ export default function OrdersManagement() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error("Error fetching orders:", error);
-            alert(error.message || "Failed to load orders. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load orders. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -38,7 +38,7 @@ export default function OrdersManagement() {
             fetchOrders();
         } catch (error) {
             console.error("Error updating order status:", error);
-            alert(error.message || "Failed to update order status. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to update order status. Check your permissions.");
         }
     };
 
@@ -49,7 +49,7 @@ export default function OrdersManagement() {
             alert("Payment verified successfully!");
         } catch (error) {
             console.error("Error verifying payment:", error);
-            alert(error.message || "Failed to verify payment. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to verify payment. Check your permissions.");
         }
     };
 
@@ -234,9 +234,9 @@ export default function OrdersManagement() {
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                {order.payment_status === "pending" && order.razorpay_payment_id && (
+                                                {order.payment_status === "pending" && order.razorpay_order_id && order.razorpay_payment_id && (
                                                     <button
-                                                        onClick={() => handlePaymentVerification(order.razorpay_order_id!, order.razorpay_payment_id)}
+                                                        onClick={() => handlePaymentVerification(order.razorpay_order_id!, order.razorpay_payment_id!)}
                                                         className="text-green-600 hover:text-green-900 p-1"
                                                         title="Verify Payment"
                                                     >
@@ -426,9 +426,9 @@ function ViewOrderModal({
                                         <span className="font-mono text-xs text-gray-800">{order.razorpay_payment_id}</span>
                                     </div>
                                 )}
-                                {order.payment_status === "pending" && order.razorpay_payment_id && (
+                                {order.payment_status === "pending" && order.razorpay_order_id && order.razorpay_payment_id && (
                                     <button
-                                        onClick={() => onPaymentVerify(order.razorpay_order_id!, order.razorpay_payment_id)}
+                                        onClick={() => onPaymentVerify(order.razorpay_order_id!, order.razorpay_payment_id!)}
                                         className="w-full mt-3 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                                     >
                                         <CreditCard className="w-4 h-4" />

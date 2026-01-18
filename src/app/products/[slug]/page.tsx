@@ -232,11 +232,13 @@ export default function ProductDetailPage() {
                     <div className="prose prose-lg text-primary/80 min-h-[200px]">
                         {activeTab === 'Benefits' && (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <p className="leading-relaxed border-l-4 border-tertiary pl-6 italic mb-8">
-                                    Experience the holistic power of Ayurveda. Regular usage supports physical vitality, mental clarity, and emotional well-being.
-                                </p>
+                                {product.introductory_description && (
+                                    <p className="leading-relaxed border-l-4 border-tertiary pl-6 italic mb-8">
+                                        {product.introductory_description}
+                                    </p>
+                                )}
                                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                                    {product.benefits.split(',').map((benefit, idx) => (
+                                    {product.benefits?.split(',').map((benefit, idx) => (
                                         <li key={idx} className="flex items-center gap-3">
                                             <div className="w-2 h-2 rounded-full bg-tertiary shrink-0"></div>
                                             <span>{benefit.trim()}</span>
@@ -248,14 +250,28 @@ export default function ProductDetailPage() {
 
                         {activeTab === 'Ingredients' && (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <p className="leading-relaxed">{product.ingredients}</p>
-                                <p className="mt-4 text-sm text-primary/60">Derived from the purest sources, ensuring you get the most potent bio-active compounds.</p>
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                    {product.ingredients?.split(',').map((ingredient, idx) => (
+                                        <li key={idx} className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-tertiary shrink-0"></div>
+                                            <span>{ingredient.trim()}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="mt-6 text-sm text-primary/60">Derived from the purest sources, ensuring you get the most potent bio-active compounds.</p>
                             </div>
                         )}
 
                         {activeTab === 'How to Use' && (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <p className="leading-relaxed">{product.how_to_use}</p>
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                    {product.how_to_use?.split(',').map((instruction, idx) => (
+                                        <li key={idx} className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-tertiary shrink-0"></div>
+                                            <span>{instruction.trim()}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                                 <div className="mt-8 p-6 bg-primary/5 rounded-2xl border border-primary/10">
                                     <p className="text-sm font-medium text-primary uppercase tracking-widest mb-2">Pro Tip</p>
                                     <p className="text-primary/70">Consistency is key in Ayurveda. For best results, follow the recommended dosage daily.</p>

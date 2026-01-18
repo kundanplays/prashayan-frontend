@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { users } from "@/lib/api";
 
-interface UserProfile {
+interface CheckoutUser {
     id: number;
     name: string;
     email: string;
@@ -25,7 +25,7 @@ export default function CheckoutPage() {
     const { items, total, subtotal, discount, clearCart } = useCartStore();
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [user, setUser] = useState<UserProfile | null>(null);
+    const [user, setUser] = useState<CheckoutUser | null>(null);
     const [selectedAddress, setSelectedAddress] = useState<string>("");
     const [checkoutStep, setCheckoutStep] = useState<"details" | "payment">("details");
     const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod");
@@ -49,11 +49,11 @@ export default function CheckoutPage() {
 
     // Check if user is logged in and fetch profile data
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
+        const authToken = localStorage.getItem("token");
+        if (authToken) {
             users.me()
                 .then((response) => {
-                    const userData = response.data;
+                    const userData = response.data as CheckoutUser;
                     setUser(userData);
 
                     // Auto-fill form with user data
@@ -133,9 +133,9 @@ export default function CheckoutPage() {
             };
 
             // Only add Authorization header if token exists (for logged-in users)
-            const token = localStorage.getItem('token');
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            const orderToken = localStorage.getItem('token');
+            if (orderToken) {
+                headers['Authorization'] = `Bearer ${orderToken}`;
             }
 
             const orderResponse = await fetch('http://127.0.0.1:8000/api/v1/orders/', {
@@ -169,12 +169,12 @@ export default function CheckoutPage() {
             const paymentHeaders: Record<string, string> = {};
 
             // Only add Authorization header if token exists (for logged-in users)
-            const token = localStorage.getItem('token');
-            if (token) {
-                paymentHeaders['Authorization'] = `Bearer ${token}`;
+            const paymentToken = localStorage.getItem('token');
+            if (paymentToken) {
+                paymentHeaders['Authorization'] = `Bearer ${paymentToken}`;
             }
 
-            const paymentResponse = await fetch(`http://127.0.0.1:8000/api/v1/payment/create-order?amount=${order.final_amount}`, {
+            const paymentResponse = await fetch(`http://127.0.0.1:8000/api/v1/payment/create-order?amount=${order.final_amount}&order_id=${order.order_id}`, {
                 method: 'POST',
                 headers: paymentHeaders
             });

@@ -25,7 +25,7 @@ export default function ReviewsManagement() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error("Error fetching reviews:", error);
-            alert(error.message || "Failed to load reviews. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load reviews. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -39,7 +39,7 @@ export default function ReviewsManagement() {
             fetchReviews();
         } catch (error) {
             console.error("Error deleting review:", error);
-            alert(error.message || "Failed to delete review. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to delete review. Check your permissions.");
         }
     };
 
@@ -49,7 +49,7 @@ export default function ReviewsManagement() {
             fetchReviews();
         } catch (error) {
             console.error("Error approving review:", error);
-            alert(error.message || "Failed to approve review. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to approve review. Check your permissions.");
         }
     };
 

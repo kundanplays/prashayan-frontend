@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { BarChart3, TrendingUp, TrendingDown, Users, Package, ShoppingCart, MessageSquare, DollarSign } from "lucide-react";
+import { admin } from "@/lib/api";
 
 interface AnalyticsData {
     totalRevenue: number;
@@ -68,7 +69,7 @@ export default function AnalyticsDashboard() {
             });
         } catch (error) {
             console.error("Error fetching analytics:", error);
-            alert(error.message || "Failed to load analytics data. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load analytics data. Please check your permissions.");
             // Fallback to empty data
             setAnalytics({
                 totalRevenue: 0,

@@ -221,7 +221,7 @@ export default function SignUpPage() {
                                             {[0, 1, 2, 3, 4, 5].map((index) => (
                                                 <div key={index} className="relative">
                                                     <input
-                                                        ref={(el) => (otpRefs.current[index] = el)}
+                                                        ref={(el) => { otpRefs.current[index] = el; }}
                                                         type="text"
                                                         value={otp[index] || ""}
                                                         onChange={(e) => {

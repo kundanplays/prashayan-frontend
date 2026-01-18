@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, Package, Truck, Home, ShoppingBag, MapPin, User, Calendar } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 const statusSteps = [
     { id: "placed", label: "Order Placed", icon: ShoppingBag },
@@ -15,6 +15,7 @@ const statusSteps = [
 
 export default function OrderSuccessPage() {
     const params = useParams();
+    const router = useRouter();
     const orderId = params.orderId as string;
     const [orderData, setOrderData] = useState<any>(null);
 
@@ -85,7 +86,7 @@ export default function OrderSuccessPage() {
                         <CheckCircle className="w-10 h-10" />
                     </motion.div>
                     <h1 className="text-4xl font-serif font-bold text-primary mb-2">Order Confirmed!</h1>
-                    <p className="text-primary/60">Your order #{orderId} has been placed successfully.</p>
+                    <p className="text-primary/60">Your order #{orderData?.order_number || orderId} has been placed successfully.</p>
                 </div>
 
                 {/* Status Tracker */}
@@ -147,8 +148,21 @@ export default function OrderSuccessPage() {
                         <section className="bg-white p-8 rounded-3xl shadow-sm border border-primary/5">
                             <h2 className="text-xl font-serif font-bold text-primary mb-6">Order Items</h2>
                             <div className="space-y-4">
-                                {orderData.items.map((item: any) => (
-                                    <div key={item.id} className="flex gap-4 p-4 bg-secondary/30 rounded-2xl">
+                                {orderData.items.map((item: any) => {
+                                    const productUrl = item.slug ? `/products/${item.slug}` : "#";
+                                    const handleClick = (e: React.MouseEvent) => {
+                                        e.preventDefault();
+                                        if (item.slug) {
+                                            router.push(productUrl);
+                                        }
+                                    };
+
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onClick={handleClick}
+                                            className="flex gap-4 p-4 bg-secondary/30 rounded-2xl hover:bg-secondary/50 transition-colors cursor-pointer"
+                                        >
                                         <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-1 shrink-0">
                                             {item.image ? (
                                                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
@@ -161,8 +175,9 @@ export default function OrderSuccessPage() {
                                             <p className="text-sm text-primary/50">Quantity: {item.quantity}</p>
                                         </div>
                                         <div className="font-bold text-primary">₹{item.price * item.quantity}</div>
-                                    </div>
-                                ))}
+                                        </div>
+                                    );
+                                })}
                             </div>
                             <div className="mt-6 pt-6 border-t border-primary/10 space-y-2">
                                 <div className="flex justify-between text-sm text-primary/60">

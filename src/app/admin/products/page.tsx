@@ -27,7 +27,7 @@ export default function ProductsManagement() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error("Error fetching products:", error);
-            alert(error.message || "Failed to load products. Please check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to load products. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -41,7 +41,7 @@ export default function ProductsManagement() {
             fetchProducts();
         } catch (error) {
             console.error("Error deleting product:", error);
-            alert(error.message || "Failed to delete product. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to delete product. Check your permissions.");
         }
     };
 
@@ -265,6 +265,7 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
     const [formData, setFormData] = useState({
         name: product?.name || "",
         description: product?.description || "",
+        introductory_description: product?.introductory_description || "",
         how_to_use: product?.how_to_use || "",
         ingredients: product?.ingredients || "",
         benefits: product?.benefits || "",
@@ -273,7 +274,7 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
         stock_quantity: product?.stock_quantity || 0,
     });
     const [images, setImages] = useState<File[]>([]);
-    const [imageUrls, setImageUrls] = useState<string[]>(product?.image_urls || []);
+    const [imageUrls, setImageUrls] = useState<string[]>(product?.full_image_urls || []);
     const [saving, setSaving] = useState(false);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,9 +300,18 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
             Object.entries(formData).forEach(([key, value]) => {
                 submitData.append(key, value.toString());
             });
+
+            // Send new uploaded images
             images.forEach((image, index) => {
                 submitData.append(`images`, image);
             });
+
+            // For updates, send existing image URLs as JSON string
+            if (product) {
+                // Filter out blob URLs (newly uploaded images) and keep only existing URLs
+                const existingUrls = imageUrls.filter(url => !url.startsWith('blob:'));
+                submitData.append('image_urls', JSON.stringify(existingUrls));
+            }
 
             if (product) {
                 await admin.products.update(product.id, submitData);
@@ -396,25 +406,42 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
                         />
                     </div>
 
+                    {/* Introductory Description */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Introductory Description</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Appears before benefits in italic styling (e.g., 'Experience the holistic power of Ayurveda. Regular usage supports physical vitality, mental clarity, and emotional well-being.')"
+                            value={formData.introductory_description}
+                            onChange={(e) => setFormData(prev => ({ ...prev, introductory_description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Optional introductory text that appears before the benefits list</p>
+                    </div>
+
                     {/* Additional Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">How to Use</label>
                             <textarea
                                 rows={3}
+                                placeholder="Separate each instruction with commas (e.g., 'Take 1-2 capsules daily with water, Consume preferably before bedtime, Follow for 8-12 weeks for best results')"
                                 value={formData.how_to_use}
                                 onChange={(e) => setFormData(prev => ({ ...prev, how_to_use: e.target.value }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
+                            <p className="text-xs text-gray-500 mt-1">Separate multiple instructions with commas. Each instruction will be displayed as a bullet point.</p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
                             <textarea
                                 rows={3}
+                                placeholder="Separate each ingredient with commas (e.g., 'Organic Ashwagandha Root Extract, Withania somnifera, Natural Herbs')"
                                 value={formData.ingredients}
                                 onChange={(e) => setFormData(prev => ({ ...prev, ingredients: e.target.value }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
+                            <p className="text-xs text-gray-500 mt-1">Separate multiple ingredients with commas. Each ingredient will be displayed as a bullet point.</p>
                         </div>
                     </div>
 
@@ -422,10 +449,12 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
                         <label className="block text-sm font-medium text-gray-700 mb-2">Benefits</label>
                         <textarea
                             rows={3}
+                            placeholder="Separate each benefit with commas (e.g., 'Reduces stress and anxiety, improves sleep quality, increases muscle strength, balances hormones')"
                             value={formData.benefits}
                             onChange={(e) => setFormData(prev => ({ ...prev, benefits: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Separate multiple benefits with commas. Each benefit will be displayed as a bullet point.</p>
                     </div>
 
                     {/* Image Upload */}

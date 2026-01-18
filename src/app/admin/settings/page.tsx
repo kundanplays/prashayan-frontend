@@ -33,7 +33,7 @@ export default function AdminSettings() {
                 setSettings(response.data);
             } catch (error) {
                 console.error("Error fetching settings:", error);
-                alert(error.message || "Failed to load settings. Please check your permissions.");
+                alert(error instanceof Error ? error.message : "Failed to load settings. Please check your permissions.");
             } finally {
                 setLoading(false);
             }
@@ -49,7 +49,7 @@ export default function AdminSettings() {
             alert("Settings saved successfully!");
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert(error.message || "Failed to save settings. Check your permissions.");
+            alert(error instanceof Error ? error.message : "Failed to save settings. Check your permissions.");
         } finally {
             setSaving(false);
         }
@@ -145,7 +145,7 @@ export default function AdminSettings() {
                                             {field.type === "text" && (
                                                 <input
                                                     type="text"
-                                                    value={field.value}
+                                                    value={String(field.value)}
                                                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                                                 />
@@ -154,7 +154,7 @@ export default function AdminSettings() {
                                             {field.type === "email" && (
                                                 <input
                                                     type="email"
-                                                    value={field.value}
+                                                    value={String(field.value)}
                                                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                                                 />
@@ -163,7 +163,7 @@ export default function AdminSettings() {
                                             {field.type === "tel" && (
                                                 <input
                                                     type="tel"
-                                                    value={field.value}
+                                                    value={String(field.value)}
                                                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                                                 />
@@ -172,7 +172,7 @@ export default function AdminSettings() {
                                             {field.type === "password" && (
                                                 <input
                                                     type="password"
-                                                    value={field.value}
+                                                    value={String(field.value)}
                                                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                                                 />
@@ -180,7 +180,7 @@ export default function AdminSettings() {
 
                                             {field.type === "select" && (
                                                 <select
-                                                    value={field.value}
+                                                    value={String(field.value)}
                                                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                                                 >
@@ -194,7 +194,7 @@ export default function AdminSettings() {
                                                 <div className="flex items-center">
                                                     <input
                                                         type="checkbox"
-                                                        checked={field.value}
+                                                        checked={Boolean(field.value)}
                                                         onChange={(e) => handleInputChange(field.name, e.target.checked)}
                                                         className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                                     />

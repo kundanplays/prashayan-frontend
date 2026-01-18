@@ -56,7 +56,7 @@ export default function ProfilePage() {
                     apiOrders.list()
                 ]);
                 console.log("Data fetched successfully:", { user: !!userRes.data, orders: ordersRes.data?.length });
-                setUser(userRes.data);
+                setUser(userRes.data as UserProfile);
                 setOrders(ordersRes.data);
             } catch (err: any) {
                 console.error("Failed to fetch profile data:", err);
